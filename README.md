@@ -12,7 +12,8 @@ Este repositório tem como objetivo **estudo e registro conceitual** de como as 
 ### 🧠 Camadas estudadas (Resumidas)
 - **Entity** → Representa as entidades do domínio.  
 - **Enum** → Define tipos enumerados usados nas entidades e na lógica de negócio.  
-- **DTO (Data Transfer Object)** → Transporta dados entre camadas.  
+- **DTO (Data Transfer Object)** → Transporta dados entre camadas.
+- **Mapping / Mapper** → Realiza a conversão e transformação de dados entre entidades e DTOs.
 - **Repository** → Responsável pela persistência e acesso aos dados.  
 - **Service** → Contém as regras de negócio e validações.  
 - **Controller** → Expõe endpoints REST e controla requisições HTTP.
