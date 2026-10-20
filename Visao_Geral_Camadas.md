@@ -1,6 +1,35 @@
 # Visão Geral das Camadas — Fluxo de uma API Spring Boot (PT-BR)
 
-## 🎯 Função principal
+> **Nível:** Iniciante ao intermediário  
+> **Linguagem:** Java  
+> **Framework:** Spring Boot (versão 3.x)
+
+---
+
+## 📑 Sumário
+
+- [1. Função principal](#-1-função-principal)
+- [2. Visão geral em uma imagem](#-2-visão-geral-em-uma-imagem)
+- [3. Resumo de cada camada](#-3-resumo-de-cada-camada)
+- [4. A jornada de uma requisição: `POST /api/v1/alunos`](#-4-a-jornada-de-uma-requisição-post-apiv1alunos)
+  - [4.1 Linha do tempo](#41-linha-do-tempo)
+  - [4.2 Transformação do dado ao longo do fluxo](#42-transformação-do-dado-ao-longo-do-fluxo)
+- [5. O mesmo fluxo em código (camada por camada)](#-5-o-mesmo-fluxo-em-código-camada-por-camada)
+  - [5.1 Enum — valores permitidos para o status](#51-enum--valores-permitidos-para-o-status)
+  - [5.2 Entity — a tabela em formato Java](#52-entity--a-tabela-em-formato-java)
+  - [5.3 Repository — acesso ao banco](#53-repository--acesso-ao-banco)
+  - [5.4 DTOs — o que entra e o que sai](#54-dtos--o-que-entra-e-o-que-sai)
+  - [5.5 Service — regras de negócio](#55-service--regras-de-negócio)
+  - [5.6 Controller — porta de entrada HTTP](#56-controller--porta-de-entrada-http)
+- [6. Onde cada validação acontece](#-6-onde-cada-validação-acontece)
+- [7. Onde colocar cada tipo de código?](#-7-onde-colocar-cada-tipo-de-código)
+- [8. Erros frequentes de iniciantes](#-8-erros-frequentes-de-iniciantes)
+- [9. Resumo final em uma tabela](#-9-resumo-final-em-uma-tabela)
+- [10. Glossário técnico completo](#-10-glossário-técnico-completo)
+
+---
+
+# 🎯 1. Função principal
 
 Este arquivo **resume e relaciona** as camadas estudadas (Controller, DTO, Service, Repository, Entity e Enum) e mostra **como elas trabalham juntas** em uma única requisição.
 
@@ -13,7 +42,7 @@ Cada arquivo anterior explica **uma camada isolada**. Este arquivo responde às 
 
 ---
 
-# 🗺️ 1. Visão geral em uma imagem
+# 🗺️ 2. Visão geral em uma imagem
 
 ```text
                   REQUISIÇÃO  (ida)
@@ -38,7 +67,7 @@ Cada arquivo anterior explica **uma camada isolada**. Este arquivo responde às 
 
 ---
 
-# 📋 2. Resumo de cada camada
+# 📋 3. Resumo de cada camada
 
 | Camada | Pergunta que responde | Responsabilidade | Recebe | Devolve | Anotações principais |
 |---|---|---|---|---|---|
@@ -61,11 +90,11 @@ Cada arquivo anterior explica **uma camada isolada**. Este arquivo responde às 
 
 ---
 
-# 🔄 3. A jornada de uma requisição: `POST /api/v1/alunos`
+# 🔄 4. A jornada de uma requisição: `POST /api/v1/alunos`
 
 Cenário: o cliente deseja **cadastrar um aluno**.
 
-## 3.1 Linha do tempo
+## 4.1 Linha do tempo
 
 | Passo | Camada | O que acontece | Se falhar |
 |---|---|---|---|
@@ -81,7 +110,7 @@ Cenário: o cliente deseja **cadastrar um aluno**.
 | 10 | Controller | Monta `201 Created` + header `Location` + corpo. | — |
 | 11 | Cliente | Recebe o JSON do aluno criado. | — |
 
-## 3.2 Transformação do dado ao longo do fluxo
+## 4.2 Transformação do dado ao longo do fluxo
 
 | Etapa | Formato do dado |
 |---|---|
@@ -95,11 +124,11 @@ Cenário: o cliente deseja **cadastrar um aluno**.
 
 ---
 
-# 🧪 4. O mesmo fluxo em código (camada por camada)
+# 🧪 5. O mesmo fluxo em código (camada por camada)
 
 > O código abaixo usa as **correções** apontadas na análise dos arquivos originais (ex.: `String` com `S` maiúsculo, `ResponseEntity.ok`, `orElseThrow`). Os imports foram omitidos para manter o foco.
 
-## 4.1 Enum — valores permitidos para o status
+## 5.1 Enum — valores permitidos para o status
 
 ```java
 public enum StatusEnum {
@@ -115,7 +144,7 @@ public enum StatusEnum {
 
 > **Variação:** o arquivo `Enums` usa o formato com `codigo` e `descricao`. Esse formato é útil quando o valor precisa de um código numérico ou de um texto de exibição, mas exige mais código para ser salvo no banco.
 
-## 4.2 Entity — a tabela em formato Java
+## 5.2 Entity — a tabela em formato Java
 
 ```java
 @Entity                                                   // 1
@@ -168,7 +197,7 @@ public class Aluno {
 | `EnumType.ORDINAL` | Ocupa menos espaço. | **Frágil:** inserir uma constante no meio do enum corrompe os dados existentes. |
 | `AttributeConverter` (usa o `codigo` do enum) | Controle total do valor gravado. | Exige uma classe de conversão adicional. |
 
-## 4.3 Repository — acesso ao banco
+## 5.3 Repository — acesso ao banco
 
 ```java
 @Repository                                                          // 1
@@ -185,7 +214,7 @@ public interface AlunoRepository extends JpaRepository<Aluno, Long> { // 2
 
 > **Nota:** como é uma `interface`, **não há implementação escrita**. O Spring a gera em tempo de execução.
 
-## 4.4 DTOs — o que entra e o que sai
+## 5.4 DTOs — o que entra e o que sai
 
 ```java
 public record AlunoRequestDTO(
@@ -209,7 +238,7 @@ public record AlunoResponseDTO(Long id, String nome, String email) {}
 | `@Email` | Valida **somente o formato** do e-mail. Não verifica se o e-mail existe nem se já está cadastrado. |
 | `AlunoResponseDTO` | Sem validações: é a saída. Não inclui o `status`, pois o cliente não precisa dele neste exemplo. |
 
-## 4.5 Service — regras de negócio
+## 5.5 Service — regras de negócio
 
 ```java
 @Service                                                                  // 1
@@ -245,7 +274,7 @@ public class AlunoService {
 | 8 | `alunoRepository.save(aluno)` | Executa o `INSERT`; devolve a Entity já com `id` preenchido. |
 | 9 | `new AlunoResponseDTO(...)` | Converte **Entity → DTO** de saída. |
 
-## 4.6 Controller — porta de entrada HTTP
+## 5.6 Controller — porta de entrada HTTP
 
 ```java
 @RestController                                           // 1
@@ -281,7 +310,7 @@ public class AlunoController {
 
 ---
 
-# 🛡️ 5. Onde cada validação acontece
+# 🛡️ 6. Onde cada validação acontece
 
 A mesma informação passa por **três filtros**, cada um em uma camada diferente.
 
@@ -295,7 +324,7 @@ A mesma informação passa por **três filtros**, cada um em uma camada diferent
 
 ---
 
-# ❓ 6. Onde colocar cada tipo de código?
+# ❓ 7. Onde colocar cada tipo de código?
 
 | Tenho este código... | Ele pertence a... | Motivo |
 |---|---|---|
@@ -312,7 +341,7 @@ A mesma informação passa por **três filtros**, cada um em uma camada diferent
 
 ---
 
-# 🚨 7. Erros frequentes de iniciantes
+# 🚨 8. Erros frequentes de iniciantes
 
 | Erro | Consequência | Correção |
 |---|---|---|
@@ -325,22 +354,6 @@ A mesma informação passa por **três filtros**, cada um em uma camada diferent
 | Usar `@Modifying` sem transação | Erro ao executar `UPDATE`/`DELETE`. | Usar `@Transactional` (preferencialmente no Service). |
 | Nomes diferentes entre Controller e Service (`buscarPorId` × `buscaPorId`) | Erro de compilação. | Padronizar os nomes. |
 | `ResponseEntity.OK(...)` | Erro de compilação (Java diferencia maiúsculas). | `ResponseEntity.ok(...)`. |
-
----
-
-# 📖 8. Glossário rápido
-
-| Termo | Definição |
-|---|---|
-| **Bean** | Objeto criado e gerenciado pelo Spring. |
-| **Injeção de dependência** | O Spring fornece a um objeto as dependências de que ele precisa, em vez de ele mesmo criá-las. |
-| **JPA** | Especificação Java para mapear objetos a tabelas. O **Hibernate** é a implementação mais usada. |
-| **JPQL** | Linguagem de consulta que usa nomes de entidades e atributos (não de tabelas e colunas). |
-| **Transação** | Conjunto de operações executado como unidade: ou tudo é confirmado (`commit`) ou tudo é desfeito (`rollback`). |
-| **ACID** | Atomicidade, Consistência, Isolamento e Durabilidade: propriedades de uma transação. |
-| **Idempotente** | Operação que, repetida várias vezes, deixa o sistema no mesmo estado final que uma única execução. |
-| **Bean Validation** | Conjunto de anotações de validação (`@NotBlank`, `@Size`, `@Email`...). |
-| **Record** | Tipo Java imutável com construtor e acessores gerados automaticamente. |
 
 ---
 
@@ -359,3 +372,124 @@ A mesma informação passa por **três filtros**, cada um em uma camada diferent
 **Ordem de leitura recomendada para estudar:** Entity → Enum → Repository → DTO → Service → Controller → Mapping RESTful API → este arquivo.
 
 **Ordem de construção recomendada de um novo recurso:** Enum → Entity → Repository → DTOs → Service → Controller → tratamento de exceções.
+
+---
+
+# 📖 10. Glossário técnico completo
+
+| Termo | Definição didática |
+|---|---|
+| **ACID** | Propriedades essenciais de transações bancárias/SQL: Atomicidade, Consistência, Isolamento e Durabilidade. |
+| **`@Autowired`** | Anotação do Spring para injeção automática de dependência. *Nota: a injeção via construtor é preferível em código moderno.* |
+| **`@Async`** | Anotação que indica que a execução de um método deve ocorrer de forma assíncrona em uma thread separada. |
+| **Atomicidade** | Propriedade "tudo ou nada": se qualquer etapa de uma operação falhar, todas as alterações anteriores são desfeitas. |
+| **`AttributeConverter`** | Classe JPA usada para converter o valor de um tipo Java no tipo correspondente da coluna do banco (e vice-versa). |
+| **Auditoria** | Rastreamento automático de criação e modificação de registros (ex.: `@CreatedDate`, `@LastModifiedDate`). |
+| **Bean** | Qualquer objeto cuja criação, ciclo de vida e dependências são gerenciados diretamente pelo Spring IoC Container. |
+| **Bean Validation** | Especifição padrão Java (Jakarta) para validação declarativa através de anotações (`@NotBlank`, `@Size`, etc.). |
+| **`BusinessException`** | Nome padrão para exceção personalizada lançada pela camada Service para indicar violações de regras de negócio. |
+| **Cache** | Mecanismo para armazenar temporariamente dados acessados frequentemente, evitando consultas custosas ao banco. |
+| **Cache Hit** | Evento quando o dado solicitado é encontrado com sucesso na memória cache sem precisar acessar a fonte primária. |
+| **Camada** | Divisão lógica e estrutural do código responsável por um papel específico na arquitetura da aplicação. |
+| **Cardinalidade** | Proporção de relacionamentos entre tabelas/entidades (ex.: 1:1, 1:N, N:N). |
+| **Cascade** | Atributo JPA que permite propagar ações executadas em uma entidade pai para suas entidades filhas agregadas. |
+| **Chave Estrangeira (FK)** | Campo em uma tabela que estabelece ligação referente à Chave Primária de outra tabela. |
+| **Chave Primária (PK)** | Identificador único e obrigatório de cada registro/linha de uma tabela. |
+| **Cliente** | A parte consumidora da API (ex.: aplicação Frontend Web, app mobile, Postman ou outro sistema). |
+| **Commit** | Efetivação definitiva de todas as alterações feitas durante uma transação no banco de dados. |
+| **Constraint** | Regra de integridade imposta diretamente no esquema da tabela do banco (`UNIQUE`, `NOT NULL`, `CHECK`). |
+| **`consumes`** | Atributo de mapeamento REST que especifica o tipo de mídia (MIME) aceito no corpo da requisição HTTP (ex.: JSON). |
+| **Contêiner IoC** | Mecanismo do Spring Framework que gerencia a instanciação e Injeção de Dependências dos Beans. |
+| **Controller** | Camada responsável pela recepção das requisições HTTP, validação de entrada básica e emissão de respostas. |
+| **CORS** | (Cross-Origin Resource Sharing) Mecanismo de segurança dos navegadores que restringe chamadas entre origens distintas. |
+| **CRUD** | Acrônimo para as quatro operações fundamentais em persistência: Create, Read, Update e Delete. |
+| **`DispatcherServlet`** | Ponto de entrada central do Spring MVC que intercepta as requisições HTTP e as roteia aos Controllers corretos. |
+| **Dependência** | Objeto ou serviço do qual outra classe precisa para conseguir executar suas atribuições. |
+| **DTO** | (Data Transfer Object) Objeto simples e imutável projetado apenas para trafegar dados entre diferentes camadas. |
+| **Encapsulamento** | Princípio da POO de proteger os campos de um objeto, liberando acesso apenas através de métodos controlados. |
+| **Entity** | Classe Java cujas instâncias e propriedades representam linhas e colunas de uma tabela do banco de dados. |
+| **`@EntityGraph`** | Anotação do Spring Data JPA para resolver o problema N+1 ao forçar o carregamento antecipado de relacionamentos. |
+| **Enum** | Tipo especial de classe Java destinado à representação de um grupo fixo e imutável de constantes. |
+| **`equals()` / `hashCode()`** | Métodos do Java que definem comparabilidade lógica entre objetos e calculam suas chaves de dispersão. |
+| **`@ExceptionHandler`** | Anotação utilizada para definir métodos específicos de tratamento para exceções capturadas no sistema. |
+| **Fetch (`LAZY`/`EAGER`)** | Configuração de carregamento de relacionamentos: sob demanda (`LAZY`) ou imediata/ansiosa (`EAGER`). |
+| **GET** | Verbo HTTP seguro e idempotente destinado exclusivamente à recuperação de dados sem efeitos colaterais no servidor. |
+| **Getter / Setter** | Métodos utilitários de acesso (leitura) e modificação (escrita) para atributos privados. |
+| **Hibernate** | Framework ORM padrão que implementa a especificação JPA no Spring Boot. |
+| **Hibernate Validator** | A implementação oficial de referência da especificação Bean Validation (Jakarta Validation). |
+| **`@Id`** | Anotação JPA necessária para indicar qual campo da Entity atua como chave primária. |
+| **Idempotência** | Propriedade na qual múltiplas requisições idênticas produzem exatamente o mesmo efeito colateral no servidor. |
+| **Injeção de Dependência** | Padrão no qual a criação de objetos dependentes é delegada ao Spring em vez de ser instanciada pela própria classe. |
+| **Injeção por Construtor** | Boas práticas de injeção no Spring onde dependências chegam como parâmetros no construtor da classe. |
+| **Header (HTTP)** | Metadado transmitido em requisições e respostas HTTP informando contexto extra (`Authorization`, `Content-Type`). |
+| **HTTP** | (Hypertext Transfer Protocol) Protocolo de camada de aplicação base para troca de mensagens e APIs na Web. |
+| **JPA** | (Jakarta Persistence API) Especificação padrão Java para Mapeamento Objeto-Relacional e persistência de dados. |
+| **`JpaRepository`** | Interface central do Spring Data JPA que disponibiliza diversos métodos de persistência prontos para uso. |
+| **JPQL** | (Java Persistence Query Language) Linguagem de consulta do JPA focada em Entidades e atributos em vez de tabelas. |
+| **JSON** | (JavaScript Object Notation) Formato leve e legível para estruturação e transferência de dados em aplicações REST. |
+| **Jackson** | Biblioteca Java padrão do Spring Boot para converter JSON em objetos Java (desserialização) e vice-versa (serialização). |
+| **`JOIN FETCH`** | Cláusula JPQL usada para forçar o carregamento de relacionamentos `LAZY` em uma única consulta SQL JOIN. |
+| **`@Lazy`** | Anotação que adia o momento de instanciação de um Bean do Spring ou carregamento de uma Entidade até que seja acessada. |
+| **LOB** | (Large Object) Mapeamento para grandes volumes de dados no banco: `BLOB` (binário) e `CLOB` (texto longo). |
+| **`@Lock`** | Anotação do Spring Data JPA usada para definir o tipo de bloqueio concorrente (Otimista ou Pessimista) em operações. |
+| **Lock Otimista** | Mecanismo de concorrência que checa versões do dado no instante do salvamento para detectar alterações simultâneas. |
+| **Lock Pessimista** | Bloqueio de registro a nível de banco de dados (`SELECT FOR UPDATE`), impedindo que outros leiam/alterem durante a transação. |
+| **`Location` (Header)** | Cabeçalho HTTP retornado em respostas `201 Created` contendo a URI para o novo recurso cadastrado. |
+| **Mapper** | Componente ou utilitário focado puramente em realizar a conversão entre objetos DTO e Entities (ex.: MapStruct). |
+| **Mapping** | Associação feita entre caminhos e verbos HTTP a métodos executáveis no Controller. |
+| **`@MappedSuperclass`** | Anotação para superclasses cujos campos declarados devem ser herdados por subentidades JPA no banco. |
+| **Método Derivado** | Consulta montada automaticamente pelo Spring Data apenas analisando a nomenclatura dada ao método na interface do Repository. |
+| **`@Modifying`** | Anotação exigida no Repository junto de `@Query` quando a consulta resulta em alterações (`UPDATE`, `DELETE`, `INSERT`). |
+| **Native Query** | Consulta declarada diretamente na sintaxe nativa SQL do banco de dados relacional em uso. |
+| **ORM** | (Object-Relational Mapping) Técnica de desenvolvimento para mapeamento entre estruturas Orientadas a Objetos e tabelas relacionais. |
+| **Parâmetro Nomeado** | Sintaxe na JPQL (`:nomeParametro`) usada para associar dinamicamente variáveis aos valores injetados via `@Param`. |
+| **`@PathVariable`** | Anotação que extrai parâmetros dinâmicos diretamente da estrutura de caminho da URI (ex.: `/alunos/{id}`). |
+| **PATCH** | Verbo HTTP utilizado para aplicar modificações parciais a um recurso existente. |
+| **Persistência** | O processo de gravar o estado de objetos em um armazenamento não-volátil (banco de dados). |
+| **POST** | Verbo HTTP não-idempotente focado no envio de dados para criação de novos recursos no servidor. |
+| **`produces`** | Atributo das anotações de Mapeamento indicando o formato da resposta enviada ao cliente (`application/json`). |
+| **PUT** | Verbo HTTP idempotente projetado para a substituição completa ou atualização integral do recurso especificado. |
+| **Query String** | Conjunto de parâmetros anexados ao final da URL através da estrutura `?chave=valor&chave2=valor2`. |
+| **`@Query`** | Anotação utilizada para definir consultas customizadas na interface do Repository via JPQL ou SQL nativo. |
+| **Record** | Recurso do Java para criação de estruturas imutáveis contendo construtores, getters e `equals/hashCode` automáticos. |
+| **Repository** | Camada encarregada de isolar a lógica e comandos do mecanismo de persistência de dados. |
+| **`@RequestBody`** | Anotação que indica que o corpo da requisição HTTP deve ser convertido no objeto parâmetro indicado. |
+| **`@RequestHeader`** | Anotação utilizada para extrair dados diretos enviados dentro dos cabeçalhos da requisição HTTP. |
+| **`@RequestMapping`** | Anotação base responsável por mapear rotas, parâmetros, verbos e tipos de dados em Controllers. |
+| **`@RequestParam`** | Anotação que lê parâmetros passados na Query String da URL. |
+| **RequestDTO** | DTO formatado exclusivamente para recepcionar e validar os dados trazidos pela requisição HTTP. |
+| **ResponseDTO** | DTO projetado especificamente para selecionar e formatar os campos expostos como resposta da API. |
+| **`ResponseEntity`** | Invólucro do Spring para construir a resposta HTTP completa (incluindo Corpo, Status Code e Headers). |
+| **`@ResponseStatus`** | Anotação para definir diretamente o código de status HTTP retornado por um método ou exceção. |
+| **REST** | Estilo arquitetural orientado a recursos identificados por URIs e manipulados via verbos padrões HTTP. |
+| **RESTful** | Classificação concedida aos sistemas e APIs que implementam fielmente as restrições e regras do padrão REST. |
+| **Rollback** | Ação de desfazer e reverter todas as alterações operadas em uma transação quando ocorre uma falha ou erro. |
+| **Rota** | O endereço/caminho (URI) associado à chamada de determinado método do Controller. |
+| **`@RestController`** | Anotação especializada que define a classe como Controller REST cujos retornos são serializados direto em JSON. |
+| **`@RestControllerAdvice`** | Interceptador global para tratamento centralizado de exceções lançadas em qualquer lugar da camada Controller. |
+| **`@RestResource`** | Anotação usada no Spring Data REST para customizar endpoints gerados automaticamente a partir de interfaces. |
+| **Regra de Negócio** | Condição, restrição ou fluxo indispensável que atende às necessidades lógicas da aplicação no mundo real. |
+| **SGBD** | Sistema de Gerenciamento de Banco de Dados (ex.: PostgreSQL, MySQL, Oracle). |
+| **Serialização** | Processo de conversão do estado de um objeto Java em um formato de transmissão legível (como JSON). |
+| **Service** | Camada encarregada de concentrar as regras de negócio, casos de uso e controle das transações da aplicação. |
+| **`@Service`** | Anotação do Spring que classifica a classe como um componente Bean da camada de serviços. |
+| **SQL** | Linguagem de consulta estruturada usada para gerenciar e consultar dados em SGBDs relacionais. |
+| **Spring Boot** | Extensão da plataforma Spring criada para simplificar a configuração, inicialização e deploy de aplicações. |
+| **Spring Data JPA** | Módulo que simplifica significativamente a implementação de repositórios JPA com suporte automático a métodos. |
+| **Spring Data REST** | Módulo capaz de expor automaticamente repositórios Spring Data como endpoints HTTP RESTful. |
+| **Stateless** | Princípio REST onde o servidor não armazena nenhum estado sobre a sessão do cliente entre requisições. |
+| **Status HTTP** | Código de resposta numérico de 3 dígitos enviado pelo servidor indicando o resultado do processamento da requisição. |
+| **Stereotype** | Anotações do Spring usadas para definir e categorizar os papéis desempenhados pelos Beans (`@Component`, `@Service`, etc.). |
+| **Stored Procedure** | Procedimento ou função armazenada e compilada diretamente no banco de dados. |
+| **`@Table`** | Anotação JPA para explicitar o nome exato e configurações da tabela vinculada à Entity. |
+| **`@Transactional`** | Anotação para delimitar a fronteira de uma transação do banco de dados em um método/classe. |
+| **`@Transient`** | Anotação que orienta o JPA a ignorar o campo anotado, não mapeando-o para colunas no banco de dados. |
+| **Transação** | Conjunto indivisível de operações executadas no banco com garantia de sucesso total ou reversão completa. |
+| **`@TransactionalEventListener`** | Event listener que aciona apenas em etapas específicas da transação (ex.: `AFTER_COMMIT`). |
+| **URI** | (Uniform Resource Identifier) Endereço usado para identificar um recurso no servidor (ex.: `/api/v1/alunos/1`). |
+| **`@Valid`** | Anotação para disparar a validação encadeada do Bean Validation no parâmetro recebido. |
+| **`@Validated`** | Variante da anotação do Spring que habilita a validação de métodos em nível de classe e suporte a grupos. |
+| **Validação Estrutural** | Verificação inicial sobre o formato e consistência dos dados de entrada realizada na camada DTO. |
+| **Validação Semântica** | Verificação das regras de negócio que dependem do estado atual da aplicação, realizada no Service. |
+| **Validação de Persistência** | Última barreira de integridade promovida pelas constraints e tipos declarados no banco de dados. |
+| **Verbo HTTP** | Método que indica qual ação deve ser realizada sobre o recurso (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`). |
